@@ -15,6 +15,7 @@ import {
   execute,
   getElement,
   getNextActiveElement,
+  getRootElement,
   isDisabled,
   isElement,
   isRTL,
@@ -358,7 +359,7 @@ class Dropdown extends BaseComponent {
       return
     }
 
-    const openToggles = SelectorEngine.find(SELECTOR_DATA_TOGGLE_SHOWN)
+    const openToggles = SelectorEngine.find(SELECTOR_DATA_TOGGLE_SHOWN, getRootElement(event.target))
 
     for (const toggle of openToggles) {
       const context = Dropdown.getInstance(toggle)

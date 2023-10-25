@@ -5,7 +5,7 @@
  * --------------------------------------------------------------------------
  */
 
-import { isDisabled, isVisible, parseSelector } from '../util/index.js'
+import { isDisabled, isVisible, parseSelector, getRootElement } from '../util/index.js'
 
 const getSelector = element => {
   let selector = element.getAttribute('data-bs-target')
@@ -33,12 +33,24 @@ const getSelector = element => {
 }
 
 const SelectorEngine = {
-  find(selector, element = document.documentElement) {
-    return [].concat(...Element.prototype.querySelectorAll.call(element, selector))
+  find(selector, element) {
+    // eslint-disable-next-line no-eq-null
+    if (element == null) {
+      console.log(new Error("rootElement must be provided"))
+      element = document.documentElement
+    }
+
+    return [].concat(...element.querySelectorAll(selector))
   },
 
-  findOne(selector, element = document.documentElement) {
-    return Element.prototype.querySelector.call(element, selector)
+  findOne(selector, element) {
+    // eslint-disable-next-line no-eq-null
+    if (element == null) {
+      console.log(new Error("rootElement must be provided"));
+      element = document.documentElement;
+    }
+
+    return element.querySelector(selector)
   },
 
   children(element, selector) {
@@ -104,7 +116,7 @@ const SelectorEngine = {
     const selector = getSelector(element)
 
     if (selector) {
-      return SelectorEngine.findOne(selector) ? selector : null
+      return SelectorEngine.findOne(selector, getRootElement(element)) ? selector : null
     }
 
     return null
@@ -113,13 +125,13 @@ const SelectorEngine = {
   getElementFromSelector(element) {
     const selector = getSelector(element)
 
-    return selector ? SelectorEngine.findOne(selector) : null
+    return selector ? SelectorEngine.findOne(selector, getRootElement(element)) : null
   },
 
   getMultipleElementsFromSelector(element) {
     const selector = getSelector(element)
 
-    return selector ? SelectorEngine.find(selector) : []
+    return selector ? SelectorEngine.find(selector, getRootElement(element)) : []
   }
 }
 

@@ -162,6 +162,27 @@ const findShadowRoot = element => {
   return findShadowRoot(element.parentNode)
 }
 
+/**
+ *
+ * @param element
+ * @returns root element of the same DOM as `element`. E.g. in case the element is in the shadow root, than shadow root is returned.
+ * If element is in normal DOM then document.documentElement is returned.
+ */
+const getRootElement = element => {
+  if (typeof element.getRootNode === 'function') {
+    const rootNode = element.getRootNode()
+    if (!rootNode) {
+      return document.documentElement
+    }
+
+    if (rootNode.nodeType === Node.DOCUMENT_NODE) {
+      return rootNode.documentElement
+    }
+
+    return rootNode
+  }
+}
+
 const noop = () => {}
 
 /**
@@ -203,6 +224,8 @@ const onDOMContentLoaded = callback => {
   }
 }
 
+const allRegisterEventListeners = {}
+
 const isRTL = () => document.documentElement.dir === 'rtl'
 
 const defineJQueryPlugin = plugin => {
@@ -220,6 +243,22 @@ const defineJQueryPlugin = plugin => {
       }
     }
   })
+
+  // collect to be registered classes
+  const name = plugin.NAME
+  if (allRegisterEventListeners[name]) {
+    throw new Error(`The bootstrap class ${name} is already registered`)
+  }
+
+  allRegisterEventListeners[name] = plugin
+}
+
+const registerEventListeners = node => {
+  for (const plugin of Object.values(allRegisterEventListeners)) {
+    if (typeof plugin.registerEventListeners === 'function') {
+      plugin.registerEventListeners(node)
+    }
+  }
 }
 
 const execute = (possibleCallback, args = [], defaultValue = possibleCallback) => {
@@ -289,6 +328,7 @@ export {
   executeAfterTransition,
   findShadowRoot,
   getElement,
+  getRootElement,
   getjQuery,
   getNextActiveElement,
   getTransitionDurationFromElement,
@@ -300,6 +340,7 @@ export {
   noop,
   onDOMContentLoaded,
   parseSelector,
+  registerEventListeners,
   reflow,
   triggerTransitionEnd,
   toType

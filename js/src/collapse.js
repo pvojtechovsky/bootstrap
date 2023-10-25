@@ -11,6 +11,7 @@ import SelectorEngine from './dom/selector-engine.js'
 import {
   defineJQueryPlugin,
   getElement,
+  getRootElement,
   reflow
 } from './util/index.js'
 
@@ -63,11 +64,11 @@ class Collapse extends BaseComponent {
     this._isTransitioning = false
     this._triggerArray = []
 
-    const toggleList = SelectorEngine.find(SELECTOR_DATA_TOGGLE)
+    const toggleList = SelectorEngine.find(SELECTOR_DATA_TOGGLE, getRootElement(this._element))
 
     for (const elem of toggleList) {
       const selector = SelectorEngine.getSelectorFromElement(elem)
-      const filterElement = SelectorEngine.find(selector)
+      const filterElement = SelectorEngine.find(selector, getRootElement(this._element))
         .filter(foundElement => foundElement === this._element)
 
       if (selector !== null && filterElement.length) {
@@ -271,22 +272,28 @@ class Collapse extends BaseComponent {
       }
     })
   }
+
+  static registerEventListeners(root) {
+    /**
+       * Data API implementation
+       */
+
+    EventHandler.on(root, EVENT_CLICK_DATA_API, SELECTOR_DATA_TOGGLE, function (event) {
+      // preventDefault only for <a> elements (which change the URL) not inside the collapsible element
+      if (event.target.tagName === 'A' || (event.delegateTarget && event.delegateTarget.tagName === 'A')) {
+        event.preventDefault()
+      }
+
+      for (const element of SelectorEngine.getMultipleElementsFromSelector(this)) {
+        Collapse.getOrCreateInstance(element, { toggle: false }).toggle()
+      }
+    })
+  }
 }
 
-/**
- * Data API implementation
- */
-
-EventHandler.on(document, EVENT_CLICK_DATA_API, SELECTOR_DATA_TOGGLE, function (event) {
-  // preventDefault only for <a> elements (which change the URL) not inside the collapsible element
-  if (event.target.tagName === 'A' || (event.delegateTarget && event.delegateTarget.tagName === 'A')) {
-    event.preventDefault()
-  }
-
-  for (const element of SelectorEngine.getMultipleElementsFromSelector(this)) {
-    Collapse.getOrCreateInstance(element, { toggle: false }).toggle()
-  }
-})
+if (!window.bs_not_on_document) {
+  Collapse.registerEventListeners(document)
+}
 
 /**
  * jQuery
